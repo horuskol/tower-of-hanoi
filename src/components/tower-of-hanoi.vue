@@ -1,19 +1,20 @@
 <template>
     <div class="flex justify-between items-center mx-8" style="height: 400px">
         <div v-for="(peg, p) in pegs" :key="p" class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
-            <block class="flex-none h-2 w-full bg-yellow-700" :peg="p" :dragged="dragged" @dropped="dropped"></block>
+            <block class="flex-none h-2 w-full bg-yellow-700 z-10" :peg="p" :dragged="dragged" @dropped="dropped"></block>
 
             <block
                 v-for="(block, b) in peg" :key="b"
-                class="flex-none" :class="[ blocks[block].color ]"
+                class="flex-none z-20" :class="[ blocks[block].color ]"
                 style="height: 50px" :style="{ width: blocks[block].width }"
                 :peg="p" :block="block"
                 @start-dragging="startDragging" :draggable="true"
+                :dragged="dragged"
                 @dropped="dropped"
             >
             </block>
 
-            <div style="position: relative; height: 100%; z-index: -1">
+            <div class="z-0" style="position: relative; height: 100%">
                 <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
             </div>
         </div>
