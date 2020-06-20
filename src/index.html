@@ -1,0 +1,41 @@
+<html class="font-default h-full">
+<head>
+    <title>Tower of Hanoi / HorusKol</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" type="text/css" href="app.css">
+</head>
+<body class="grid grid-rows-layout h-full text-base">
+    <header class="border-blue-200 pb-2 mb-2">
+        <h1 class="bg-blue-200 p-1 text-3xl p-4 mb-2">Tower of Hanoi</h1>
+    </header>
+
+    <main id="app">
+        <tower-of-hanoi></tower-of-hanoi>
+
+        <div class="m-4 p-4 border border-red-700">
+            <h2 class="mb-2 text-xl text-bold">The Rules</h2>
+
+            <p class="mb-2">The objective of the puzzle is to move the entire stack to another rod, obeying the following simple rules:</p>
+
+            <ul class="ml-2 list-disc list-inside">
+                <li>Only one disk can be moved at a time.</li>
+                <li>Each move consists of taking the upper disk from one of the stacks and placing it on top of another stack or on an empty rod.</li>
+                <li>No larger disk may be placed on top of a smaller disk.</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="p-4 text-right bg-gray-200">
+        <p>
+            <a class="text-blue-700 visited:text-purple-700 hover:text-indigo-500 underline" href="https://github.com/horuskol/poker-dice">Source code</a> |
+            <a class="text-blue-700 visited:text-purple-700 hover:text-indigo-500 underline" href="https://apps.horuskol.net">More apps by HorusKol</a> |
+            <a class="text-blue-700 visited:text-purple-700 hover:text-indigo-500 underline" href="https://horuskol.net">Blog</a> |
+            &copy; Stuart Jones
+        </p>
+    </footer>
+
+<script type="text/javascript" src="app.js"></script>
+</body>
+</html>
