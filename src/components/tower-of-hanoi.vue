@@ -60,14 +60,12 @@ export default {
         },
 
         dropped({source, target}) {
-            console.log(source, target);
-
             this.pegs[source.peg] = this.pegs[source.peg].filter((block) => {
                 return block !== source.block;
             });
             this.pegs[target.peg].push(source.block);
 
-            this.endDragging();
+            this.dragged = {};
         }
     },
 
