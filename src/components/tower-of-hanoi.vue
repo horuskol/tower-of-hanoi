@@ -6,8 +6,9 @@
     <div class="flex justify-between items-center mx-8" style="height: 400px" @mousemove="moveDisk" @touchmove="moveDisk">
         <div v-for="(peg, pegNumber) in pegs"
              :key="pegNumber"
-             class="flex flex-col-reverse justify-start items-center"
+             class="flex relative flex-col-reverse justify-start items-center"
              style="width: 25%; height: 200px"
+             :data-peg="pegNumber"
              @touchend="(event) => placeDisk(event, pegNumber)"
              @mouseup="(event) => placeDisk(event, pegNumber)"
         >
@@ -20,12 +21,12 @@
                 we set it here, because we want to limit our interference with the user interface
             -->
             <disk v-for="diskNumber in peg"
-                   class="flex-none h-12 z-10"
-                   style="touch-action: none"
-                   :color="disks[diskNumber].color"
-                   :width="disks[diskNumber].width"
-                   @mousedown.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
-                   @touchstart.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
+                  class="flex-none h-12 z-10"
+                  style="touch-action: none"
+                  :color="disks[diskNumber].color"
+                  :width="disks[diskNumber].width"
+                  @mousedown.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
+                  @touchstart.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
             ></disk>
 
             <div class="z-0" style="position: relative; height: 100%">
@@ -67,9 +68,14 @@ export default {
             if (this.pegs[pegNumber].slice(-1)[0] === diskNumber) {
                 // 'position: fixed' means we can freely position the disk anywhere in the page
                 event.target.style.position = 'fixed';
+                event.target.style.zIndex = '-10';
 
                 // remember what we're dragging around - this is needed for when we drop the disk
-                this.dragging = event.target;
+                this.dragging = {
+                    disk: event.target,
+                    pegNumber,
+                    diskNumber
+                };
 
                 // initialise the position of the disk
                 // usually the user will start moving as soon as they pickup a disk (even if it's just a jiggle)
@@ -82,32 +88,36 @@ export default {
             if (this.dragging) {
                 if (event.pageX) {
                     // mousemove is easy - there's only one pointer, so it's x/y is easily found
-                    this.dragging.style.left = event.pageX - this.dragging.clientWidth / 2;
-                    this.dragging.style.top = event.pageY - this.dragging.clientHeight / 2;
+                    this.dragging.disk.style.left = event.pageX - this.dragging.disk.clientWidth / 2;
+                    this.dragging.disk.style.top = event.pageY - this.dragging.disk.clientHeight / 2;
                 } else {
                     // touchmove is harder...
                     // multiple touch is supported, but so far we're only interested in one
                     // although, knowing that we can get information on multiple touch points is cool
                     // pinch zoom or rotation
-                    this.dragging.style.left = event.changedTouches[0].pageX - this.dragging.clientWidth / 2;
-                    this.dragging.style.top = event.changedTouches[0].pageY - this.dragging.clientHeight / 2;
+                    this.dragging.disk.style.left = event.changedTouches[0].pageX - this.dragging.disk.clientWidth / 2;
+                    this.dragging.disk.style.top = event.changedTouches[0].pageY - this.dragging.disk.clientHeight / 2;
                 }
             }
         },
 
         placeDisk(event, pegNumber) {
-            console.log(pegNumber, event.target, event.srcElement, event.toElement);
-            if (this.pegs[pegNumber] === []) {
-                console.log(event.target);
+            console.log(event, event.currentTarget);
+            if (this.dragging) {
+                if (this.pegs[pegNumber].length === 0 || this.pegs[pegNumber].slice(-1).pop() < this.dragging.diskNumber) {
+                    this.pegs[pegNumber].push(this.dragging.diskNumber);
+                    this.pegs[this.dragging.pegNumber].pop();
+                }
             }
         },
 
-        dropDisk(event) {
+        dropDisk() {
             // reset everything
             if (this.dragging) {
-                this.dragging.style.position = '';
-                this.dragging.style.x = '';
-                this.dragging.style.y = '';
+                this.dragging.disk.style.position = '';
+                this.dragging.disk.style.x = '';
+                this.dragging.disk.style.y = '';
+                this.dragging.disk.zIndex = '';
 
                 this.dragging = null;
             }
