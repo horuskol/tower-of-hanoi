@@ -4,30 +4,27 @@
         might as well track touch movements here, too
     -->
     <div class="flex justify-between items-center mx-8" style="height: 400px" @mousemove="moveBlock" @touchmove="moveBlock">
-        <div class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
+        <div v-for="(peg, pegNumber) in pegs"
+             :key="pegNumber"
+             class="flex flex-col-reverse justify-start items-center"
+             style="width: 25%; height: 200px"
+        >
             <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
 
             <!--
                 setting 'touch-action: none' stops the browser scrolling around after we pickup a block
                 once we've picked up the block, scrolling will remain blocked until we release it
+
+                we set it here, because we want to limit our interference with the user interface
             -->
-            <div class="h-16 w-32 bg-red-600 z-10" style="touch-action: none" @mousedown="pickupBlock" @touchstart="pickupBlock" ></div>
-
-            <div class="z-0" style="position: relative; height: 100%">
-                <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
-            </div>
-        </div>
-
-        <div class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
-            <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
-
-            <div class="z-0" style="position: relative; height: 100%">
-                <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
-            </div>
-        </div>
-
-        <div class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
-            <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
+            <block v-for="blockNumber in peg"
+                   class="flex-none h-12 z-10"
+                   style="touch-action: none"
+                   :color="blocks[blockNumber].color"
+                   :width="blocks[blockNumber].width"
+                   @mousedown.native="(event) => pickupBlock(event, pegNumber, blockNumber)"
+                   @touchstart.native="(event) => pickupBlock(event, pegNumber, blockNumber)"
+            ></block>
 
             <div class="z-0" style="position: relative; height: 100%">
                 <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
@@ -37,7 +34,13 @@
 </template>
 
 <script>
+import Block from './block';
+
 export default {
+    components: {
+        block: Block,
+    },
+
     data() {
         return {
             dragging: null,
@@ -49,25 +52,28 @@ export default {
             ],
 
             blocks: {
-                1: { color: 'bg-blue-600', width: '128px'},
-                2: { color: 'bg-green-600', width: '96px'},
-                3: { color: 'bg-red-600', width: '64px'},
-            }
+                1: { color: 'hsl(0, 80%, 60%)', width: '128px' },
+                2: { color: 'hsl(120, 80%, 60%)', width: '96px' },
+                3: { color: 'hsl(240, 80%, 60%)', width: '64px' },
+            },
         }
     },
 
     methods: {
-        pickupBlock(event) {
-            // 'position: fixed' means we can freely position the block anywhere in the page
-            event.target.style.position = 'fixed';
+        pickupBlock(event, pegNumber, blockNumber) {
+            // only pickup if it's the top block on the peg
+            if (this.pegs[pegNumber].slice(-1)[0] === blockNumber) {
+                // 'position: fixed' means we can freely position the block anywhere in the page
+                event.target.style.position = 'fixed';
 
-            // remember what we're dragging around - this is needed for when we drop the block
-            this.dragging = event.target;
+                // remember what we're dragging around - this is needed for when we drop the block
+                this.dragging = event.target;
 
-            // initialise the position of the block
-            // usually the user will start moving as soon as they pickup a block (even if it's just a jiggle)
-            // but sometimes they will delay, and if we don't set the left/top positions of the block, it could start anywhere
-            this.moveBlock(event);
+                // initialise the position of the block
+                // usually the user will start moving as soon as they pickup a block (even if it's just a jiggle)
+                // but sometimes they will delay, and if we don't set the left/top positions of the block, it could start anywhere
+                this.moveBlock(event);
+            }
         },
 
         moveBlock(event) {
