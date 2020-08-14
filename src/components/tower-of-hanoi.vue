@@ -1,20 +1,36 @@
 <template>
-    <div class="flex justify-between items-center mx-8" style="height: 400px">
-        <div v-for="(peg, p) in pegs" :key="p" class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
-            <block class="flex-none h-2 w-full bg-yellow-700 z-10" :peg="p" :dragged="dragged" @dropped="dropped"></block>
+    <!--
+        we need to track mouse movements in the container when trying to move disks
+        might as well track touch movements here, too
+    -->
+    <div class="flex justify-between items-center mx-8" style="height: 400px" @mousemove="moveDisk" @touchmove="moveDisk">
+        <div v-for="(peg, pegNumber) in pegs"
+             :key="pegNumber"
+             class="flex relative flex-col-reverse justify-start items-center"
+             style="width: 25%; height: 200px"
+             :data-peg="pegNumber"
+             @touchend="placeDisk"
+             @mouseup="placeDisk"
+        >
+            <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
 
-            <block
-                v-for="(block, b) in peg" :key="b"
-                class="flex-none z-20" :class="[ blocks[block].color ]"
-                style="height: 50px" :style="{ width: blocks[block].width }"
-                :peg="p" :block="block"
-                @start-dragging="startDragging" :draggable="true"
-                :dragged="dragged"
-                @dropped="dropped"
-            >
-            </block>
+            <!--
+                setting 'touch-action: none' stops the browser scrolling around after we pickup a disk
+                once we've picked up the disk, scrolling will remain disked until we release it
 
-            <div class="z-0" style="position: relative; height: 100%">
+                we set it here, because we want to limit our interference with the user interface
+            -->
+            <disk v-for="diskNumber in peg"
+                  :key="diskNumber"
+                  class="flex-none h-12 z-10"
+                  style="touch-action: none"
+                  :color="disks[diskNumber].color"
+                  :width="disks[diskNumber].width"
+                  @mousedown.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
+                  @touchstart.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
+            ></disk>
+
+            <div style="position: relative; height: 100%; z-index: -20">
                 <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
             </div>
         </div>
@@ -22,16 +38,16 @@
 </template>
 
 <script>
-import Block from './block';
+import Disk from './disk';
 
 export default {
     components: {
-        'block': Block,
+        disk: Disk,
     },
 
     data() {
         return {
-            dragged: {},
+            dragging: null,
 
             pegs: [
                 [ 1, 2, 3 ],
@@ -39,44 +55,94 @@ export default {
                 []
             ],
 
-            blocks: {
-                1: { color: 'bg-blue-600', width: '128px'},
-                2: { color: 'bg-green-600', width: '96px'},
-                3: { color: 'bg-red-600', width: '64px'},
-            }
+            disks: {
+                1: { color: 'hsl(0, 80%, 60%)', width: '128px' },
+                2: { color: 'hsl(120, 80%, 60%)', width: '96px' },
+                3: { color: 'hsl(240, 80%, 60%)', width: '64px' },
+            },
         }
     },
 
     methods: {
-        startDragging(event) {
-            console.log(event);
-            this.dragged = {
-                target: event.target
+        pickupDisk(event, pegNumber, diskNumber) {
+            // only pickup if it's the top disk on the peg
+            if (this.pegs[pegNumber].slice(-1)[0] === diskNumber) {
+                // 'position: fixed' means we can freely position the disk anywhere in the page
+                event.target.style.position = 'fixed';
+                event.target.style.zIndex = '-10';
+
+                // remember what we're dragging around - this is needed for when we drop the disk
+                this.dragging = {
+                    disk: event.target,
+                    pegNumber,
+                    diskNumber
+                };
+
+                // initialise the position of the disk
+                // usually the user will start moving as soon as they pickup a disk (even if it's just a jiggle)
+                // but sometimes they will delay, and if we don't set the left/top positions of the disk, it could start anywhere
+                this.moveDisk(event);
             }
         },
 
-        endDragging() {
-            this.dragged = {};
+        moveDisk(event) {
+            if (this.dragging) {
+                if (event.pageX) {
+                    // mousemove is easy - there's only one pointer, so it's x/y is easily found
+                    this.dragging.disk.style.left = event.pageX - this.dragging.disk.clientWidth / 2;
+                    this.dragging.disk.style.top = event.pageY - this.dragging.disk.clientHeight / 2;
+                } else {
+                    // touchmove is harder...
+                    // multiple touch is supported, but so far we're only interested in one
+                    // although, knowing that we can get information on multiple touch points is cool
+                    // pinch zoom or rotation
+                    this.dragging.disk.style.left = event.changedTouches[0].pageX - this.dragging.disk.clientWidth / 2;
+                    this.dragging.disk.style.top = event.changedTouches[0].pageY - this.dragging.disk.clientHeight / 2;
+                }
+            }
         },
 
-        dropped({source, target}) {
-            this.pegs[source.peg] = this.pegs[source.peg].filter((block) => {
-                return block !== source.block;
-            });
-            this.pegs[target.peg].push(source.block);
+        placeDisk(event) {
+            let elem = null;
+            let pegNumber = null;
 
-            this.dragged = {};
+            if (event.pageX) {
+                // mousedown
+                elem = document.elementFromPoint(event.pageX, event.pageY);
+            } else {
+                // touchend
+                elem = document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY);
+            }
+
+            pegNumber = elem.dataset['peg'];
+
+            if (this.dragging) {
+                if (this.pegs[pegNumber].length === 0 || this.pegs[pegNumber].slice(-1).pop() < this.dragging.diskNumber) {
+                    this.pegs[pegNumber].push(this.dragging.diskNumber);
+                    this.pegs[this.dragging.pegNumber].pop();
+                }
+            }
+        },
+
+        dropDisk() {
+            // reset everything
+            if (this.dragging) {
+                this.dragging.disk.style.position = '';
+                this.dragging.disk.style.left = '';
+                this.dragging.disk.style.top = '';
+                this.dragging.disk.style.zIndex = '';
+
+                this.dragging = null;
+            }
         }
     },
 
     mounted() {
-        document.addEventListener("dragend", () => {
-            this.endDragging()
-        }, false);
-
-        document.addEventListener("dragover", (event) => {
-            event.preventDefault();
-        }, false);
+        // after clicking/touching a disk to move, the user can try to 'drop' it anywhere
+        // so we listen for this at the top most level
+        document.addEventListener('mouseup', this.dropDisk);
+        document.addEventListener('touchend', this.dropDisk);
+        document.addEventListener('touchcancel', this.dropDisk);
     }
 };
 </script>
