@@ -1,18 +1,33 @@
 <template>
-    <div class="flex justify-between items-center mx-8" style="height: 400px">
-        <div v-for="(peg, p) in pegs" :key="p" class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
-            <block class="flex-none h-2 w-full bg-yellow-700 z-10" :peg="p" :dragged="dragged" @dropped="dropped"></block>
+    <!--
+        we need to track mouse movements in the container when trying to move blocks
+        might as well track touch movements here, too
+    -->
+    <div class="flex justify-between items-center mx-8" style="height: 400px" @mousemove="moveBlock" @touchmove="moveBlock">
+        <div class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
+            <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
 
-            <block
-                v-for="(block, b) in peg" :key="b"
-                class="flex-none z-20" :class="[ blocks[block].color ]"
-                style="height: 50px" :style="{ width: blocks[block].width }"
-                :peg="p" :block="block"
-                @start-dragging="startDragging" :draggable="true"
-                :dragged="dragged"
-                @dropped="dropped"
-            >
-            </block>
+            <!--
+                setting 'touch-action: none' stops the browser scrolling around after we pickup a block
+                once we've picked up the block, scrolling will remain blocked until we release it
+            -->
+            <div class="h-16 w-32 bg-red-600 z-10" style="touch-action: none" @mousedown="pickupBlock" @touchstart="pickupBlock" ></div>
+
+            <div class="z-0" style="position: relative; height: 100%">
+                <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
+            </div>
+        </div>
+
+        <div class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
+            <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
+
+            <div class="z-0" style="position: relative; height: 100%">
+                <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
+            </div>
+        </div>
+
+        <div class="flex flex-col-reverse justify-start items-center" style="width: 25%; height: 200px">
+            <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
 
             <div class="z-0" style="position: relative; height: 100%">
                 <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
@@ -22,16 +37,10 @@
 </template>
 
 <script>
-import Block from './block';
-
 export default {
-    components: {
-        'block': Block,
-    },
-
     data() {
         return {
-            dragged: {},
+            dragging: null,
 
             pegs: [
                 [ 1, 2, 3 ],
@@ -48,35 +57,54 @@ export default {
     },
 
     methods: {
-        startDragging(event) {
-            console.log(event);
-            this.dragged = {
-                target: event.target
+        pickupBlock(event) {
+            // 'position: fixed' means we can freely position the block anywhere in the page
+            event.target.style.position = 'fixed';
+
+            // remember what we're dragging around - this is needed for when we drop the block
+            this.dragging = event.target;
+
+            // initialise the position of the block
+            // usually the user will start moving as soon as they pickup a block (even if it's just a jiggle)
+            // but sometimes they will delay, and if we don't set the left/top positions of the block, it could start anywhere
+            this.moveBlock(event);
+        },
+
+        moveBlock(event) {
+            if (this.dragging) {
+                if (event.pageX) {
+                    // mousemove is easy - there's only one pointer, so it's x/y is easily found
+                    this.dragging.style.left = event.pageX - this.dragging.clientWidth / 2;
+                    this.dragging.style.top = event.pageY - this.dragging.clientHeight / 2;
+                } else {
+                    // touchmove is harder...
+                    // multiple touch is supported, but so far we're only interested in one
+                    // although, knowing that we can get information on multiple touch points is cool
+                    // pinch zoom or rotation
+                    this.dragging.style.left = event.changedTouches[0].pageX - this.dragging.clientWidth / 2;
+                    this.dragging.style.top = event.changedTouches[0].pageY - this.dragging.clientHeight / 2;
+                }
             }
         },
 
-        endDragging() {
-            this.dragged = {};
-        },
+        dropBlock(event) {
+            // reset everything
+            if (this.dragging) {
+                this.dragging.style.position = '';
+                this.dragging.style.x = '';
+                this.dragging.style.y = '';
 
-        dropped({source, target}) {
-            this.pegs[source.peg] = this.pegs[source.peg].filter((block) => {
-                return block !== source.block;
-            });
-            this.pegs[target.peg].push(source.block);
-
-            this.dragged = {};
+                this.dragging = null;
+            }
         }
     },
 
     mounted() {
-        document.addEventListener("dragend", () => {
-            this.endDragging()
-        }, false);
-
-        document.addEventListener("dragover", (event) => {
-            event.preventDefault();
-        }, false);
+        // after clicking/touching a block to move, the user can try to 'drop' it anywhere
+        // so we listen for this at the top most level
+        document.addEventListener('mouseup', this.dropBlock);
+        document.addEventListener('touchend', this.dropBlock);
+        document.addEventListener('touchcancel', this.dropBlock);
     }
 };
 </script>
