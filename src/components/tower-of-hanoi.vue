@@ -9,8 +9,8 @@
              class="flex relative flex-col-reverse justify-start items-center"
              style="width: 25%; height: 200px"
              :data-peg="pegNumber"
-             @touchend="(event) => placeDisk(event, pegNumber)"
-             @mouseup="(event) => placeDisk(event, pegNumber)"
+             @touchend="placeDisk"
+             @mouseup="placeDisk"
         >
             <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
 
@@ -21,6 +21,7 @@
                 we set it here, because we want to limit our interference with the user interface
             -->
             <disk v-for="diskNumber in peg"
+                  :key="diskNumber"
                   class="flex-none h-12 z-10"
                   style="touch-action: none"
                   :color="disks[diskNumber].color"
@@ -29,7 +30,7 @@
                   @touchstart.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
             ></disk>
 
-            <div class="z-0" style="position: relative; height: 100%">
+            <div style="position: relative; height: 100%; z-index: -20">
                 <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
             </div>
         </div>
@@ -101,8 +102,20 @@ export default {
             }
         },
 
-        placeDisk(event, pegNumber) {
-            console.log(event, event.currentTarget);
+        placeDisk(event) {
+            let elem = null;
+            let pegNumber = null;
+
+            if (event.pageX) {
+                // mousedown
+                elem = document.elementFromPoint(event.pageX, event.pageY);
+            } else {
+                // touchend
+                elem = document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY);
+            }
+
+            pegNumber = elem.dataset['peg'];
+
             if (this.dragging) {
                 if (this.pegs[pegNumber].length === 0 || this.pegs[pegNumber].slice(-1).pop() < this.dragging.diskNumber) {
                     this.pegs[pegNumber].push(this.dragging.diskNumber);
@@ -115,9 +128,9 @@ export default {
             // reset everything
             if (this.dragging) {
                 this.dragging.disk.style.position = '';
-                this.dragging.disk.style.x = '';
-                this.dragging.disk.style.y = '';
-                this.dragging.disk.zIndex = '';
+                this.dragging.disk.style.left = '';
+                this.dragging.disk.style.top = '';
+                this.dragging.disk.style.zIndex = '';
 
                 this.dragging = null;
             }
