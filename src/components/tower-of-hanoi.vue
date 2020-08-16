@@ -37,13 +37,12 @@
             </div>
         </div>
 
-        <div class="flex justify-between m-8">
+        <div class="lg:flex justify-between m-8 text-xl">
             <span>Moves taken: {{ moves }}/{{minMoves}}</span>
             <span v-if="done" class="ml-4">
                 Well done, you've solved the puzzle,
-                <span v-if="moves === minMoves">and managed this in the minimum number of moves.</span>
-                <span v-if="moves > minMoves">but can you do it in less moves?</span>
-                <a @click.prevent="reset" class="text-blue-700 visited:text-purple-700 hover:text-indigo-500 underline cursor-pointer">Try again?</a>
+                <span v-if="moves === minMoves">and managed this in the minimum number of moves. <a @click.prevent="reset" class="text-blue-700 visited:text-purple-700 hover:text-indigo-500 underline cursor-pointer">Play again?</a></span>
+                <span v-if="moves > minMoves">but can you do it in less moves? <a @click.prevent="reset" class="text-blue-700 visited:text-purple-700 hover:text-indigo-500 underline cursor-pointer">Try again?</a></span>
             </span>
         </div>
     </div>
