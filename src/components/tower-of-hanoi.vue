@@ -1,38 +1,44 @@
 <template>
-    <!--
-        we need to track mouse movements in the container when trying to move disks
-        might as well track touch movements here, too
-    -->
-    <div class="flex justify-between items-center mx-8" style="height: 400px" @mousemove="moveDisk" @touchmove="moveDisk">
-        <div v-for="(peg, pegNumber) in pegs"
-             :key="pegNumber"
-             class="flex relative flex-col-reverse justify-start items-center"
-             style="width: 25%; height: 200px"
-             :data-peg="pegNumber"
-             @touchend="placeDisk"
-             @mouseup="placeDisk"
-        >
-            <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
+    <div>
+        <!--
+            we need to track mouse movements in the container when trying to move disks
+            might as well track touch movements here, too
+        -->
+        <div class="flex justify-between items-center mx-8" style="height: 400px" @mousemove="moveDisk" @touchmove="moveDisk">
+            <div v-for="(peg, pegNumber) in pegs"
+                 :key="pegNumber"
+                 class="flex relative flex-col-reverse justify-start items-center"
+                 style="width: 25%; height: 200px"
+                 :data-peg="pegNumber"
+                 @touchend="placeDisk"
+                 @mouseup="placeDisk"
+            >
+                <div class="flex-none h-2 w-full bg-yellow-700 z-10"></div>
 
-            <!--
-                setting 'touch-action: none' stops the browser scrolling around after we pickup a disk
-                once we've picked up the disk, scrolling will remain disked until we release it
+                <!--
+                    setting 'touch-action: none' stops the browser scrolling around after we pickup a disk
+                    once we've picked up the disk, scrolling will remain disked until we release it
 
-                we set it here, because we want to limit our interference with the user interface
-            -->
-            <disk v-for="diskNumber in peg"
-                  :key="diskNumber"
-                  class="flex-none h-12 z-10"
-                  style="touch-action: none"
-                  :color="disks[diskNumber].color"
-                  :width="disks[diskNumber].width"
-                  @mousedown.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
-                  @touchstart.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
-            ></disk>
+                    we set it here, because we want to limit our interference with the user interface
+                -->
+                <disk v-for="diskNumber in peg"
+                      :key="diskNumber"
+                      class="flex-none h-12 z-10"
+                      style="touch-action: none"
+                      :color="disks[diskNumber].color"
+                      :width="disks[diskNumber].width"
+                      @mousedown.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
+                      @touchstart.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
+                ></disk>
 
-            <div style="position: relative; height: 100%; z-index: -20">
-                <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
+                <div style="position: relative; height: 100%; z-index: -20">
+                    <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
+                </div>
             </div>
+        </div>
+
+        <div class="mx-8">
+            Moves taken: {{ moves }}
         </div>
     </div>
 </template>
@@ -60,6 +66,8 @@ export default {
                 2: { color: 'hsl(120, 80%, 60%)', width: '96px' },
                 3: { color: 'hsl(240, 80%, 60%)', width: '64px' },
             },
+
+            moves: 0
         }
     },
 
@@ -120,6 +128,10 @@ export default {
                 if (this.pegs[pegNumber].length === 0 || this.pegs[pegNumber].slice(-1).pop() < this.dragging.diskNumber) {
                     this.pegs[pegNumber].push(this.dragging.diskNumber);
                     this.pegs[this.dragging.pegNumber].pop();
+                }
+
+                if (this.dragging.disk.parentNode !== elem) {
+                    this.moves++;
                 }
             }
         },
