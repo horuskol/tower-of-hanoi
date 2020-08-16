@@ -37,8 +37,9 @@
             </div>
         </div>
 
-        <div class="mx-8">
-            Moves taken: {{ moves }}
+        <div class="flex mx-8">
+            <span>Moves taken: {{ moves }}</span>
+            <span v-if="done">Well done, you've solved the puzzle.</span>
         </div>
     </div>
 </template>
@@ -67,7 +68,9 @@ export default {
                 3: { color: 'hsl(240, 80%, 60%)', width: '64px' },
             },
 
-            moves: 0
+            moves: 0,
+
+            done: false,
         }
     },
 
@@ -134,6 +137,10 @@ export default {
                     this.moves++;
                 }
             }
+
+            this.done = [1,2,3].every((test, index) =>  {
+                return this.pegs[2][index] === test;
+            });
         },
 
         dropDisk() {
