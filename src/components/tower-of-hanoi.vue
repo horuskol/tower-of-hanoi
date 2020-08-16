@@ -135,17 +135,18 @@ export default {
 
         moveDisk(event) {
             if (this.dragging) {
-                if (event.pageX) {
+                console.log(event.clientY, event.pageY);
+                if (event.clientX) {
                     // mousemove is easy - there's only one pointer, so it's x/y is easily found
-                    this.dragging.disk.style.left = event.pageX - this.dragging.disk.clientWidth / 2;
-                    this.dragging.disk.style.top = event.pageY - this.dragging.disk.clientHeight / 2;
+                    this.dragging.disk.style.left = event.clientX - this.dragging.disk.clientWidth / 2;
+                    this.dragging.disk.style.top = event.clientY -  this.dragging.disk.clientHeight / 2;
                 } else {
                     // touchmove is harder...
                     // multiple touch is supported, but so far we're only interested in one
                     // although, knowing that we can get information on multiple touch points is cool
                     // pinch zoom or rotation
-                    this.dragging.disk.style.left = event.changedTouches[0].pageX - this.dragging.disk.clientWidth / 2;
-                    this.dragging.disk.style.top = event.changedTouches[0].pageY - this.dragging.disk.clientHeight / 2;
+                    this.dragging.disk.style.left = event.changedTouches[0].clientX - this.dragging.disk.clientWidth / 2;
+                    this.dragging.disk.style.top = event.changedTouches[0].clientY - this.dragging.disk.clientHeight / 2;
                 }
             }
         },
@@ -154,12 +155,12 @@ export default {
             let elem = null;
             let pegNumber = null;
 
-            if (event.pageX) {
+            if (event.clientX) {
                 // mousedown
-                elem = document.elementFromPoint(event.pageX, event.pageY);
+                elem = document.elementFromPoint(event.clientX, event.clientY);
             } else {
                 // touchend
-                elem = document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY);
+                elem = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
             }
 
             pegNumber = elem.dataset['peg'];
