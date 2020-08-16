@@ -4,7 +4,7 @@
             we need to track mouse movements in the container when trying to move disks
             might as well track touch movements here, too
         -->
-        <div class="flex justify-between items-center mx-8" style="height: 400px" @mousemove="moveDisk" @touchmove="moveDisk">
+        <div class="flex justify-between items-center mx-8 mt-8" @mousemove="moveDisk" @touchmove="moveDisk">
             <div v-for="(peg, pegNumber) in pegs"
                  :key="pegNumber"
                  class="flex relative flex-col-reverse justify-start items-center"
@@ -37,9 +37,14 @@
             </div>
         </div>
 
-        <div class="flex mx-8">
-            <span>Moves taken: {{ moves }}</span>
-            <span v-if="done">Well done, you've solved the puzzle.</span>
+        <div class="flex justify-between m-8">
+            <span>Moves taken: {{ moves }}/{{minMoves}}</span>
+            <span v-if="done" class="ml-4">
+                Well done, you've solved the puzzle,
+                <span v-if="moves === minMoves">and managed this in the minimum number of moves.</span>
+                <span v-if="moves > minMoves">but can you do it in less moves?</span>
+                <a @click.prevent="reset" class="text-blue-700 visited:text-purple-700 hover:text-indigo-500 underline cursor-pointer">Try again?</a>
+            </span>
         </div>
     </div>
 </template>
@@ -69,15 +74,27 @@ export default {
             },
 
             moves: 0,
+            minMoves: 7,
 
             done: false,
         }
     },
 
     methods: {
+        reset() {
+            this.pegs = [
+                [ 1, 2, 3 ],
+                [],
+                []
+            ];
+
+            this.moves = 0;
+            this.done = false;
+        },
+
         pickupDisk(event, pegNumber, diskNumber) {
             // only pickup if it's the top disk on the peg
-            if (this.pegs[pegNumber].slice(-1)[0] === diskNumber) {
+            if (!this.done && this.pegs[pegNumber].slice(-1)[0] === diskNumber) {
                 // 'position: fixed' means we can freely position the disk anywhere in the page
                 event.target.style.position = 'fixed';
                 event.target.style.zIndex = '-10';
