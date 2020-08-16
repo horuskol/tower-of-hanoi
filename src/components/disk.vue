@@ -9,6 +9,7 @@ export default {
     props: {
         block: Number,
         color: String,
+        height: String,
         width: String,
         peg: Number
     },
@@ -23,6 +24,7 @@ export default {
         styleObject() {
             return {
                 'background-color': this.color,
+                height: this.height,
                 width: this.width,
             }
         }

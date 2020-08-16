@@ -1,5 +1,12 @@
 <template>
     <div>
+        <div class="flex">
+            <button class="flex-1 py-4 border border-blue-500" :class="{'bg-blue-100': numDisks === 3}" @click="() => { numDisks = 3; reset()}">3 disks</button>
+            <button class="flex-1 py-4 border border-blue-500" :class="{'bg-blue-100': numDisks === 4}" @click="() => { numDisks = 4; reset()}">4 disks</button>
+            <button class="flex-1 py-4 border border-blue-500" :class="{'bg-blue-100': numDisks === 5}" @click="() => { numDisks = 5; reset()}">5 disks</button>
+            <button class="flex-1 py-4 border border-blue-500" :class="{'bg-blue-100': numDisks === 6}" @click="() => { numDisks = 6; reset()}">6 disks</button>
+        </div>
+
         <!--
             we need to track mouse movements in the container when trying to move disks
             might as well track touch movements here, too
@@ -23,16 +30,17 @@
                 -->
                 <disk v-for="diskNumber in peg"
                       :key="diskNumber"
-                      class="flex-none h-12 z-10"
+                      class="flex-none z-10"
                       style="touch-action: none"
                       :color="disks[diskNumber].color"
                       :width="disks[diskNumber].width"
+                      :height="disks[diskNumber].height"
                       @mousedown.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
                       @touchstart.native="(event) => pickupDisk(event, pegNumber, diskNumber)"
                 ></disk>
 
                 <div style="position: relative; height: 100%; z-index: -20">
-                    <div class="bg-yellow-700" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
+                    <div class="bg-yellow-700 opacity-50" style="position: absolute; top: 0; bottom: 0; left: calc(50% - 5px); right: calc(50% - 5px);"></div>
                 </div>
             </div>
         </div>
@@ -60,20 +68,16 @@ export default {
         return {
             dragging: null,
 
-            pegs: [
-                [ 1, 2, 3 ],
-                [],
-                []
-            ],
+            numDisks: 3,
 
-            disks: {
-                1: { color: 'hsl(0, 80%, 60%)', width: '128px' },
-                2: { color: 'hsl(120, 80%, 60%)', width: '96px' },
-                3: { color: 'hsl(240, 80%, 60%)', width: '64px' },
-            },
+            pegs: [],
+
+            win: [],
+
+            disks: {},
 
             moves: 0,
-            minMoves: 7,
+            minMoves: 0,
 
             done: false,
         }
@@ -82,12 +86,27 @@ export default {
     methods: {
         reset() {
             this.pegs = [
-                [ 1, 2, 3 ],
+                [],
                 [],
                 []
             ];
 
+            this.disks = {};
+            this.win = [];
+
+            for (let i = 1; i <= this.numDisks; i++) {
+                this.pegs[0].push(i);
+                this.win.push(i);
+
+                this.disks[i] = {
+                    color: 'hsl(' + (360 * i / this.numDisks)  + ', 80%, 60%)',
+                    width: (100 * (this.numDisks - i + 1) / this.numDisks) + '%',
+                    height: 100 / (this.numDisks + 1) + '%',
+                }
+            }
+
             this.moves = 0;
+            this.minMoves = Math.pow(2, this.numDisks) - 1;
             this.done = false;
         },
 
@@ -95,6 +114,8 @@ export default {
             // only pickup if it's the top disk on the peg
             if (!this.done && this.pegs[pegNumber].slice(-1)[0] === diskNumber) {
                 // 'position: fixed' means we can freely position the disk anywhere in the page
+                event.target.style.height = event.target.clientHeight;
+                event.target.style.width = event.target.clientWidth;
                 event.target.style.position = 'fixed';
                 event.target.style.zIndex = '-10';
 
@@ -154,7 +175,10 @@ export default {
                 }
             }
 
-            this.done = [1,2,3].every((test, index) =>  {
+            console.log(this.win);
+            console.log(this.pegs[2]);
+
+            this.done = this.win.every((test, index) =>  {
                 return this.pegs[2][index] === test;
             });
         },
@@ -173,6 +197,8 @@ export default {
     },
 
     mounted() {
+        this.reset();
+
         // after clicking/touching a disk to move, the user can try to 'drop' it anywhere
         // so we listen for this at the top most level
         document.addEventListener('mouseup', this.dropDisk);
