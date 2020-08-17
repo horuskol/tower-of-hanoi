@@ -135,7 +135,6 @@ export default {
 
         moveDisk(event) {
             if (this.dragging) {
-                console.log(event.clientY, event.pageY);
                 if (event.clientX) {
                     // mousemove is easy - there's only one pointer, so it's x/y is easily found
                     this.dragging.disk.style.left = event.clientX - this.dragging.disk.clientWidth / 2;
@@ -175,9 +174,6 @@ export default {
                     this.moves++;
                 }
             }
-
-            console.log(this.win);
-            console.log(this.pegs[2]);
 
             this.done = this.win.every((test, index) =>  {
                 return this.pegs[2][index] === test;
