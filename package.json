@@ -6,7 +6,7 @@
     "watch": "cross-env NODE_ENV=development node_modules/.bin/webpack --watch --config webpack.dev.js"
   },
   "dependencies": {
-    "postcss": "^7.0.35",
+    "postcss": "^8.2.10",
     "vue": "^2.6.12"
   },
   "devDependencies": {
